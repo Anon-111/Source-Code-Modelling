@@ -1,0 +1,12 @@
+The following github repositories were scraped to create the dataset:
+1. Numpy (https://github.com/numpy/numpy)
+2. Matplotlib (https://github.com/matplotlib/matplotlib)
+3. Numpy-ml-master (https://github.com/ddbourgin/numpy-ml)
+4. Python-master (https://github.com/geekcomputers/Python)
+5. Pytorch-master (https://github.com/pytorch/pytorch)
+6. Scikit-learn-master (https://github.com/scikit-learn/scikit-learn)
+7. Scipy-master (https://github.com/scipy/scipy)
+8. tensor2tensor-master (https://github.com/tensorflow/tensor2tensor)
+9. Tensorflow-master (https://github.com/tensorflow/tensorflow)
+10. Seaborn (https://github.com/mwaskom/seaborn)
+11. NLTK (https://github.com/nltk/nltk)
