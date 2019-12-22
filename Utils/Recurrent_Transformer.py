@@ -5,7 +5,6 @@ import functools
 import util_code as utils
 import loss
 import optimize
-import mos
 import develop_bias
 
 class Recurrent_Transformer():
@@ -125,47 +124,26 @@ class Recurrent_Transformer():
         encoder_output = encoder_output[:,-1]
         encoder_RNN = encoder_RNN[:,-1]
     with tf.variable_scope('output'):
-      if self.arg.use_mos:
-        if self.arg.use_decoder:
-          self.logits = mos.MoS(decoder_output,
-                                hidden_size = self.arg.hidden_size,
-                                vocab_size = self.arg.target_vocab_size)
-        else:
-          self.logits = mos.MoS(encoder_output,
-                                hidden_size = self.arg.hidden_size,
-                                vocab_size = self.arg.target_vocab_size)
-        self.logits = tf.nn.softmax(self.logits)
-        if self.arg.loss == 'sparse_softmax_cross_entropy_with_logits':
-          self.arg.loss = 'log_loss'
-        self.loss_cl = loss.Loss(self.logits,
-                                 self.targets,
-                                 self.arg.loss,
-                                 vocab_size = self.arg.target_vocab_size,
-                                 activation = tf.identity,
-                                 label_smoothing = self.arg.label_smoothing)
-        cost = tf.reduce_sum(self.loss_cl.loss,
-                             axis = -1)
+      weights = tf.get_variable('weights',
+                                shape = [self.arg.hidden_size, self.arg.target_vocab_size],
+                                dtype = tf.float32)
+      bias = tf.get_variable('bias',
+                             shape = [self.arg.target_vocab_size],
+                             dtype = tf.float32)
+      if arg.use_decoder:
+        self.logits = tf.tensordot(decoder_output,
+                                   weights,
+                                   axes = 1) + bias
       else:
-        weights = tf.get_variable('weights',
-                                  shape = [self.arg.hidden_size, self.arg.target_vocab_size],
-                                  dtype = tf.float32)
-        bias = tf.get_variable('bias',
-                               shape = [self.arg.target_vocab_size],
-                               dtype = tf.float32)
-        if arg.use_decoder:
-          self.logits = tf.tensordot(decoder_output,
-                                     weights,
-                                     axes = 1) + bias
-        else:
-          self.logits = tf.tensordot((encoder_output + encoder_RNN) / 2,
-                                     weights,
-                                     axes = 1) + bias
-        self.loss_cl = loss.Loss(self.logits,
-                                 self.targets,
-                                 self.arg.loss,
-                                 vocab_size = self.arg.target_vocab_size,
-                                 label_smoothing = self.arg.label_smoothing)
-        cost = self.loss_cl.loss
+        self.logits = tf.tensordot((encoder_output + encoder_RNN) / 2,
+                                   weights,
+                                   axes = 1) + bias
+      self.loss_cl = loss.Loss(self.logits,
+                               self.targets,
+                               self.arg.loss,
+                               vocab_size = self.arg.target_vocab_size,
+                               label_smoothing = self.arg.label_smoothing)
+      cost = self.loss_cl.loss
     if self.arg.mask_loss:
       self.cost = tf.reduce_mean(cost * self.loss_mask)
     else:
@@ -222,8 +200,7 @@ class Recurrent_Transformer():
                                         dropout_type = self.arg.dropout_type,
                                         relative_attention = self.arg.relative_attention,
                                         max_relative_position = self.arg.max_relative_position,
-                                        adaptive_mask = self.arg.adaptive_mask,
-                                        dynamic_attention_span = self.arg.dynamic_attention_span)
+                                        adaptive_mask = self.arg.adaptive_mask)
           if self.arg.adaptive_mask:
             self.encoder_l0.append(y[1])
             y = y[0]
@@ -284,8 +261,7 @@ class Recurrent_Transformer():
                                         dropout_type = self.arg.dropout_type,
                                         relative_attention = self.arg.relative_attention,
                                         max_relative_position = self.arg.max_relative_position,
-                                        adaptive_mask = self.arg.adaptive_mask,
-                                        dynamic_attention_span = self.arg.dynamic_attention_span)
+                                        adaptive_mask = self.arg.adaptive_mask)
           if self.arg.adaptive_mask:
             self.decoder_l0.append(y[1])
             y = y[0]
@@ -304,8 +280,7 @@ class Recurrent_Transformer():
                                         dropout_type = self.arg.dropout_type,
                                         relative_attention = False,
                                         max_relative_position = self.arg.max_relative_position,
-                                        adaptive_mask = self.arg.adaptive_mask,
-                                        dynamic_attention_span = self.arg.dynamic_attention_span)
+                                        adaptive_mask = self.arg.adaptive_mask)
           if self.arg.adaptive_mask:
             self.decoder_l0.append(y[1])
             y = y[0]
@@ -324,8 +299,7 @@ class Recurrent_Transformer():
                                         dropout_type = self.arg.dropout_type,
                                         relative_attention = False,
                                         max_relative_position = self.arg.max_relative_position,
-                                        adaptive_mask = self.arg.adaptive_mask,
-                                        dynamic_attention_span = self.arg.dynamic_attention_span)
+                                        adaptive_mask = self.arg.adaptive_mask)
           if self.arg.adaptive_mask:
             self.decoder_l0.append(y[1])
             y = y[0]
@@ -472,13 +446,11 @@ def argument():
   arg.adaptive_mask = False # whether adaptive mask is used
   arg.classification = False # whether the final output is a sequence, or single label
   arg.deparameterize = False # KEEP AS FALSE
-  arg.dynamic_attention_span = False # KEEP AS FALSE
   arg.mask_loss = False # whether parts of the loss is masked
   arg.relative_attention = False # whether to use relative attention
   arg.unidirectional_decoder = True # whether the decoder is unidirectional
   arg.unidirectional_encoder = False # whether the encoder is unidirectional
   arg.use_decoder = True # whether to use the decoder
-  arg.use_mos = False # whether to use an MoS
   arg.use_relu = True # whether the activation functions are ReLU or GELU
   arg.weight_decay_regularization = False # whether to use weight decay
   return arg

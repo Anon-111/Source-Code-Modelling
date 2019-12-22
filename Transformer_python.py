@@ -18,8 +18,8 @@ def build_and_run_model(model,
     from Transformer_XL import Transformer_XL as model, argument
   elif model == 'recurrent_trasformer':
     from Recurrent_Transformer import Recurrent_Transformer as model, argument
-  elif model == 'experimental_transformer_xl':
-    from Experimental_Transformer_XL import Experimental_Transformer_XL as model, argument
+  elif model == 'extended_recurrent_transformer':
+    from Extended_Recurrent_Transformer import Extended_Recurrent_Transformer as model, argument
   elif model == 'gru':
     from RNN import RNN as model, argument
   elif model == 'lstm':
@@ -291,7 +291,7 @@ def run(task,
     inputs[0] = 'recurrent_trasformer'
       
   if task == 5:
-    inputs[0] = 'experimental_transformer_xl'
+    inputs[0] = 'extended_recurrent_transformer'
     
   if task == 6:
     inputs[0] = 'gru'

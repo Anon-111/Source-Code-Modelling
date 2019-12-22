@@ -5,7 +5,6 @@ import functools
 import util_code as utils
 import loss
 import optimize
-import mos
 import develop_bias
 
 class Evolved_Transformer():
@@ -114,47 +113,26 @@ class Evolved_Transformer():
       else:
         output = encoder_output
     with tf.variable_scope('output'):
-      if self.arg.use_mos:
-        if self.arg.use_decoder:
-          self.logits = mos.MoS(output,
-                                hidden_size = self.arg.hidden_size,
-                                vocab_size = self.arg.target_vocab_size)
-        else:
-          self.logits = mos.MoS(output,
-                                hidden_size = self.arg.hidden_size,
-                                vocab_size = self.arg.target_vocab_size)
-        self.logits = tf.nn.softmax(self.logits)
-        if self.arg.loss == 'sparse_softmax_cross_entropy_with_logits':
-          self.arg.loss = 'log_loss'
-        self.loss_cl = loss.Loss(self.logits,
-                                 self.targets,
-                                 self.arg.loss,
-                                 vocab_size = self.arg.target_vocab_size,
-                                 activation = tf.identity,
-                                 label_smoothing = self.arg.label_smoothing)
-        cost = tf.reduce_sum(self.loss_cl.loss,
-                             axis = -1)
+      weights = tf.get_variable('weights',
+                                shape = [self.arg.hidden_size, self.arg.target_vocab_size],
+                                dtype = tf.float32)
+      bias = tf.get_variable('bias',
+                             shape = [self.arg.target_vocab_size],
+                             dtype = tf.float32)
+      if arg.use_decoder:
+        self.logits = tf.tensordot(output,
+                                   weights,
+                                   axes = 1) + bias
       else:
-        weights = tf.get_variable('weights',
-                                  shape = [self.arg.hidden_size, self.arg.target_vocab_size],
-                                  dtype = tf.float32)
-        bias = tf.get_variable('bias',
-                               shape = [self.arg.target_vocab_size],
-                               dtype = tf.float32)
-        if arg.use_decoder:
-          self.logits = tf.tensordot(output,
-                                     weights,
-                                     axes = 1) + bias
-        else:
-          self.logits = tf.tensordot(output,
-                                     weights,
-                                     axes = 1) + bias
-        self.loss_cl = loss.Loss(self.logits,
-                                 self.targets,
-                                 self.arg.loss,
-                                 vocab_size = self.arg.target_vocab_size,
-                                 label_smoothing = self.arg.label_smoothing)
-        cost = self.loss_cl.loss
+        self.logits = tf.tensordot(output,
+                                   weights,
+                                   axes = 1) + bias
+      self.loss_cl = loss.Loss(self.logits,
+                               self.targets,
+                               self.arg.loss,
+                               vocab_size = self.arg.target_vocab_size,
+                               label_smoothing = self.arg.label_smoothing)
+      cost = self.loss_cl.loss
         
     if self.arg.mask_loss:
       self.cost = tf.reduce_mean(cost * self.loss_mask)
@@ -289,8 +267,7 @@ class Evolved_Transformer():
                                         dropout_type = self.arg.dropout_type,
                                         relative_attention = self.arg.relative_attention,
                                         max_relative_position = self.arg.max_relative_position,
-                                        adaptive_mask = self.arg.adaptive_mask,
-                                        dynamic_attention_span = self.arg.dynamic_attention_span)
+                                        adaptive_mask = self.arg.adaptive_mask)
           if self.arg.adaptive_mask:
             self.encoder_l0.append(y[1])
             y = y[0]
@@ -341,8 +318,7 @@ class Evolved_Transformer():
                                                  name = 'self_attention',
                                                  relative_attention = self.arg.relative_attention,
                                                  max_relative_position = self.arg.max_relative_position,
-                                                 adaptive_mask = self.arg.adaptive_mask,
-                                                 dynamic_attention_span = self.arg.dynamic_attention_span)
+                                                 adaptive_mask = self.arg.adaptive_mask)
           if self.arg.adaptive_mask:
             self.decoder_l0.append(left_state[1])
             left_state = left_state[0]
@@ -358,8 +334,7 @@ class Evolved_Transformer():
                                                   name = 'encoder_attention',
                                                   relative_attention = False,
                                                   max_relative_position = self.arg.max_relative_position,
-                                                  adaptive_mask = self.arg.adaptive_mask,
-                                                  dynamic_attention_span = self.arg.dynamic_attention_span)
+                                                  adaptive_mask = self.arg.adaptive_mask)
           if self.arg.adaptive_mask:
             self.decoder_l0.append(right_state[1])
             right_state = right_state[0]
@@ -434,8 +409,7 @@ class Evolved_Transformer():
                                         dropout_type = self.arg.dropout_type,
                                         relative_attention = self.arg.relative_attention,
                                         max_relative_position = self.arg.max_relative_position,
-                                        adaptive_mask = self.arg.adaptive_mask,
-                                        dynamic_attention_span = self.arg.dynamic_attention_span)
+                                        adaptive_mask = self.arg.adaptive_mask)
           if self.arg.adaptive_mask:
             self.decoder_l0.append(y[1])
             y = y[0]
@@ -453,8 +427,7 @@ class Evolved_Transformer():
                                         dropout_type = self.arg.dropout_type,
                                         relative_attention = False,
                                         max_relative_position = self.arg.max_relative_position,
-                                        adaptive_mask = self.arg.adaptive_mask,
-                                        dynamic_attention_span = self.arg.dynamic_attention_span)
+                                        adaptive_mask = self.arg.adaptive_mask)
           if self.arg.adaptive_mask:
             self.decoder_l0.append(y[1])
             y = y[0]
@@ -580,7 +553,6 @@ def argument():
   arg.unidirectional_decoder = True # whether the decoder is unidirectional
   arg.unidirectional_encoder = False # whether the encoder is unidirectional
   arg.use_decoder = True # whether to use the decoder
-  arg.use_mos = False # whether to use an MoS
   arg.use_relu = True # whether the activation functions are ReLU or GELU
   arg.weight_decay_regularization = False # whether to use weight decay
   
