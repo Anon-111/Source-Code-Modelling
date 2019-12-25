@@ -269,7 +269,6 @@ def build_and_run_model(model,
                             task,
                             'model_epoch{}_of_{}'.format(epoch + 1,
                                                          max_epochs)))
-  input_data = test_feeder.get_next_batch()
   sess.close()
   
 def run(task,
