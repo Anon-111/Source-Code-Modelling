@@ -201,8 +201,6 @@ def build_and_run_model(model,
         acc_array.append(accuracy)
     test_loss_array = []
     test_acc_array = []
-    if error_detection or automatic_debugging:
-      errors_class.create_tracked_errors()
     for iteration in range(len(test_feeder)):
       input_data = test_feeder.get_next_batch()
       memory = np.zeros([arg.encoder_layers, 32, 0, arg.hidden_size])
