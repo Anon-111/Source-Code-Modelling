@@ -161,6 +161,7 @@ def build_and_run_model(model,
     current_epoch = 0
 
   max_epochs = 25
+  # adjust epochs here
   for epoch in range(current_epoch,
                      max_epochs):
     loss_array = []
