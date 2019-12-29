@@ -122,13 +122,13 @@ def build_and_run_model(model,
                           task))
 
   
-  feeder = PythonFeeder(os.listdir('Python_Code/libraries/tokenized-codes')[:10000],
-                        'Python_Code/libraries/tokenized-codes',
+  feeder = PythonFeeder(os.listdir('Python_Code/libraries/tokenized-codes/tokenized-codes')[:10000],
+                        'Python_Code/libraries/tokenized-codes/tokenized-codes',
                         32,
                         500,
                         length = 1)
-  test_feeder = PythonFeeder(os.listdir('Python_Code/libraries/tokenized-codes')[10000:],
-                             'Python_Code/libraries/tokenized-codes',
+  test_feeder = PythonFeeder(os.listdir('Python_Code/libraries/tokenized-codes/tokenized-codes')[10000:],
+                             'Python_Code/libraries/tokenized-codes/tokenized-codes',
                              32,
                              500,
                              length = 1)
