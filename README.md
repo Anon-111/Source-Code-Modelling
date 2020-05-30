@@ -1,4 +1,3 @@
 # Source-Code-Modelling
-Repository for 'Transformer-based Language Models for Source Code'
-
-Run Transformer_python.py and adjust the input number to change the used model.
+Repository for 'Language Modeling for Source Code with Transformer-XL'
+Currently being prepared for display.
